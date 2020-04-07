@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<!--LK Consulting Proprietery--->
+<html lang="en">
+   <head>
+      <meta charset="UTF-8">
+      <title>LKRF</title>
+      <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css">
+      <script src="https://code.jquery.com/jquery-3.3.1.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
+      <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+      <link href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.css" rel="stylesheet">      
+      <!--suppress JSUnresolvedLibraryURL -->
+      
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.0/jquery.min.js"></script>
+      
+      <!--suppress JSUnresolvedLibraryURL -->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
+      <!--suppress JSUnresolvedLibraryURL -->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js"></script>
+      <script type="text/javascript">         
+         $(document).ready(function() {
+           // sending a connect request to the server.
+           var socket = io.connect('http://192.168.1.99:5000');
+         
+            const config = {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: "03 AIA",
+                        backgroundColor: 'rgb(255, 99, 132)',
+                        borderColor: 'rgb(255, 99, 132)',
+                        data: [],
+                        fill: false,
+                    },
+
+                    {    label: "03 AIB",
+                        backgroundColor: 'rgb(0, 255, 132)',
+                        borderColor: 'rgb(255, 99, 132)',
+                        data: [],
+                        fill: false,
+                    },
+
+                    {    label: "51 AIA",
+                        backgroundColor: 'rgb(25, 25, 255)',
+                        borderColor: 'rgb(255, 99, 132)',
+                        data: [],
+                        fill: false,
+                    },
+
+                    {    label: "51 AIB",
+                        backgroundColor: 'rgb(128, 12, 132)',
+                        borderColor: 'rgb(255, 99, 132)',
+                        data: [],
+                        fill: false,
+                    }],
+                },
+                options: {
+                    responsive: true,
+                    title: {
+                        display: true,
+                        text: 'AI 01 To 04'
+                    },
+                    tooltips: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    hover: {
+                        mode: 'nearest',
+                        intersect: true
+                    },
+                    scales: {
+                        xAxes: [{
+                            display: true,
+                            scaleLabel: {
+                                display: true,
+                                labelString: 'Time'
+                            }
+                        }],
+                        yAxes: [{
+                            display: true,
+                            scaleLabel: {
+                                display: true,
+                                labelString: 'UV Intensity'
+                            }
+                        }]
+                    }
+                }
+            };
+
+
+
+            const context = document.getElementById('canvas').getContext('2d');
+    
+            const lineChart = new Chart(context, config);
+    
+            const source = new EventSource("/chart-data");
+    
+            source.onmessage = function (event) {
+                const data = JSON.parse(event.data);
+                console.log('uvdata',$(data.time),$(data.value[0][0]),$(data.value[0][1]),$(data.value[1][0]),$(data.value[1][0]))
+                if (config.data.labels.length === 30) {
+                    config.data.labels.shift();
+                    config.data.datasets[0].data.shift();
+                    config.data.datasets[1].data.shift();
+                    config.data.datasets[2].data.shift();
+                    config.data.datasets[3].data.shift();                                                            
+                }
+                config.data.labels.push(data.time);
+                config.data.datasets[0].data.push(data.value[0][0]);
+                config.data.datasets[1].data.push(data.value[0][1]);
+                config.data.datasets[2].data.push(data.value[1][0]);
+                config.data.datasets[3].data.push(data.value[1][1]);                
+                lineChart.update();
+            };
+                 
+
+           // An event handler for a change of value    
+/*          
+           $('#stop').click(function(event) {               
+               socket.emit('Stop Pressed',{
+                   who :$(this).attr('id')
+               });
+               console.log('done1',$(this).val())
+               return false;              
+           });
+          
+  
+
+           $('#idle').click(function(event) {
+               socket.emit('Idle Pressed',{
+                   who :$(this).attr('id')
+               });
+               console.log('done2',event)
+               return false;              
+           });
+           $('#abort').click(function(event) {               
+               socket.emit('Abort Pressed',{
+                   who :$(this).attr('id')
+               });
+               console.log('done3',event)
+               return false;               
+           });
+*/
+           $('#querry').click(function(event) {               
+               socket.emit('querry',{
+                   data1 :$('#identification').val(),
+                   data2 :$('#command').val(),
+                   data3 :$('#response').val(),
+                   data4 :$('#param').val()
+               });
+               console.log('querry',$('#identification').val(),$('#command').val(),$('#response').val(),$('#param').val())
+               return false;              
+           });       
+           $('#querry1').click(function(event) {               
+               socket.emit('querry1',{
+                   data1 :$('#identification1').val(),
+                   data2 :$('#command1').val(),
+                   data3 :$('#response1').val(),
+                   data4 :$('#param1').val()
+               });
+               console.log('querry1',$('#identification1').val(),$('#command1').val(),$('#response1').val(),$('#param1').val())
+               return false;              
+           });                                     
+           $('#fsmcmd').click(function(event) {               
+               socket.emit('fsmcmd',{
+                   data1 :$('#hiotcmd').val()
+               });
+               console.log('fsmcmd',$('#hiotcmd').val())
+               return false;              
+           });             
+           
+           socket.on('after connect', function(msg) {
+               console.log('After connect', msg);
+           });
+           socket.on('state', function(msg) {
+               var pstate = document.getElementById('pstate'); 
+               var cstate  = document.getElementById('cstate');
+ 
+               pstate.textContent = msg['pstate'];
+               cstate.textContent = msg['cstate'];
+ 
+           });    
+           socket.on('device1', function(msg) {
+               var id = document.getElementById('devid1'); 
+               var type  = document.getElementById('type1');
+               var data1  = document.getElementById('data11');
+               var data2  = document.getElementById('data12');        
+/*
+               var data1label  = document.getElementById('data11label');
+               var data2label  = document.getElementById('data12label');
+
+               if (msg['type'] == "RFFLEX") {
+                   data1label.innerHTML = " ANAA ";
+                   data2label.innerHTML = " ANAB ";
+                   
+               };  
+*/             
+               id.textContent = msg['id'];
+               type.textContent = msg['type'];
+               data1.textContent = msg['data1'];
+               data2.textContent = msg['data2'];
+
+           });     
+           socket.on('device2', function(msg) {
+               var id = document.getElementById('devid2'); 
+               var type  = document.getElementById('type2');
+               var data1  = document.getElementById('data21');
+               var data2  = document.getElementById('data22');
+
+               id.textContent = msg['id'];
+               type.textContent = msg['type'];
+               data1.textContent = msg['data1'];
+               data2.textContent = msg['data2']; 
+           });                                    
+           socket.on('res', function(msg) {
+               var err = document.getElementById('err'); 
+               var data  = document.getElementById('data');
+               var paramw  = document.getElementById('paramw');
+               var cmd  = document.getElementById('cmd');
+               var idd = document.getElementById('idd');
+               
+               console.log('data updated',msg['paramr']);
+               console.log('paramw updated',msg['paramw']);
+               console.log('cmd updated',msg['cmd']);
+               console.log('id updated',msg['id']);
+               
+               err.textContent = msg['err'];
+               data.textContent = msg['paramr'];
+               paramw.textContent = msg['paramw'];
+               cmd.textContent = msg['cmd'];
+               idd.textContent = msg['id'];
+           });                      
+           socket.on('res1', function(msg) {
+               var err = document.getElementById('err1'); 
+               var data  = document.getElementById('data1');
+               var paramw  = document.getElementById('paramw1');
+               var cmd  = document.getElementById('cmd1');
+               var idd = document.getElementById('idd1');
+               
+               console.log('data1 updated',msg['paramr']);
+               console.log('paramw1 updated',msg['paramw']);
+               console.log('cmd1 updated',msg['cmd']);
+               console.log('id1 updated',msg['id']);
+ 
+               
+               err.textContent = msg['err'];
+               data.textContent = msg['paramr'];
+               paramw.textContent = msg['paramw'];
+               cmd.textContent = msg['cmd'];
+               idd.textContent = msg['id'];
+           });      
+           
+         });
+ 
+      </script>
+      <style type="text/css">
+          .res,.res1 {    
+    
+              display : inline;
+              padding  : 5px;
+          }      
+      </style>                                     
+
+   </head>
+   <body>
+   <h1><b>Welcome To LKRF Module</b></h1>
+  
+      
+
+     <div>
+         <label for="identification">&nbsp;ID(2Digits 01 to 99):</label>
+         <input type="number" id="identification" name="identification" min="01" max="99" value="01">
+         <label for="command" >Command:</label>
+             <select id = "command" name = "command">
+                 <option value= "UP">IS Master UP</option>
+                 <option value= "AIA">Analog A</option>
+                 <option value= "AIB">Analog B</option>
+                 <option value= "CHDEVID">Change Device ID</option>
+                 <option value= "HELLO" selected="selected">HELLO</option>
+                 <option value= "WAKE">Wake device within 5 seconds of Reboot</option>
+                 <option value= "AWAKE">AWake device within 5 seconds of Reboot</option>                 
+                 <option value= "NOMSG">Number of Messages</option>
+                 <option value= "RESET">Reset to Factory</option>
+                 <option value= "GPIO">General Purpose DO</option>
+                 <option value= "REBOOT">Reboot Device</option>
+                 <option value= "BUTTON">Button</option>
+                 <option value= "BATT">Batt Voltage</option>          
+                 <option value= "TYPE">Set TYPE</option>
+            </select>
+        <label for="response">Response:</label>
+            <select id = "response" name = "response" value = "No"> 
+                <option value= "No" selected="selected">NO</option> 
+                <option value= "Yes">YES</option>             
+            </select> 
+        <label for="param">Param1:</label>
+        <input type="text" id="param" name="param" value>
+                
+        <button id = "querry">SEND</button>                 
+     </div>
+     
+
+     <div class ="res">ID: <span id = "idd">??</span></div>          
+     <div class ="res">CMD: <span id = "cmd">??</span></div>
+     <div class ="res">PARAMW: <span id = "paramw">??</span></div>
+     <div class ="res">DATA: <span id = "data">??</span></div>
+     <div class ="res">STATUS: <span id = "err">??</span></div>               
+     <div class ="res">Previous State: <span id = "pstate">??</span></div>
+     <div class ="res">Current State: <span id = "cstate">??</span></div>  
+  
+     <br>
+
+     <div>
+         <label for="identification1">&nbsp;ID(2Digits 01 to 99):</label>
+         <input type="number" id="identification1" name="identification1" min="01" max="99" value="01">
+         <label for="command" >Command:</label>
+             <select id = "command1" name = "command1">
+                 <option value= "UP">IS Master UP</option>
+                 <option value= "AIA">Analog A</option>
+                 <option value= "AIB">Analog B</option>
+                 <option value= "CHDEVID">Change Device ID</option>
+                 <option value= "HELLO" selected="selected">HELLO</option>
+                 <option value= "WAKE">Wake device within 5 seconds of Reboot</option>
+                 <option value= "AWAKE">AWake device within 5 seconds of Reboot</option>                 
+                 <option value= "NOMSG">Number of Messages</option>
+                 <option value= "RESET">Reset to Factory</option>
+                 <option value= "GPIO">General Purpose DO</option>
+                 <option value= "REBOOT">Reboot Device</option>
+                 <option value= "BUTTON">Button</option>
+                 <option value= "BATT">Batt Voltage</option>                 
+                 <option value= "TYPE">Set TYPE</option>
+            </select>
+        <label for="response1">Response:</label>
+            <select id = "response1" name = "response1" value = "No"> 
+                <option value= "No" selected="selected">NO</option> 
+                <option value= "Yes">YES</option>             
+            </select>
+        <label for="param1">Param1:</label>
+        <input type="text" id="param1" name="param1">               
+        <button id = "querry1">SEND1</button> 
+        
+        <label for="hiotcmd" >HIOT:</label>
+            <select id = "hiotcmd" name = "hiotcmd">
+                 <option value= "Msg PowerUp">RESTART HIOT</option>
+                 <option value= "Msg Idle">MANUAL IDLE</option>
+                 <option value= "Msg Online" selected="selected">ONLINE IDLE</option>
+                 <option value= "Msg Listen">Listening Mode</option>
+            </select>
+        <button id = "fsmcmd">HIOT </button> 
+     </div>
+     
+     <div class ="res1">ID: <span id = "idd1">??</span></div>          
+     <div class ="res1">CMD: <span id = "cmd1">??</span></div>
+     <div class ="res1">PARAMW: <span id = "paramw1">??</span></div>
+     <div class ="res1">DATA: <span id = "data1">??</span></div>
+     <div class ="res1">STATUS: <span id = "err1">??</span></div>  
+
+     <div class ="res1">ID: <span id = "devid1">??</span></div>
+     <div class ="res1">TYPE: <span id = "type1">??</span></div>
+     <div class ="res1" id = "data11label">DATA1: <span id = "data11">??</span></div>
+     <div class ="res1" id = "data12label">DATA2: <span id = "data12">??</span></div>  
+          
+     <div class ="res1">ID: <span id = "devid2">??</span></div>
+     <div class ="res1">TYPE: <span id = "type2">??</span></div>
+     <div class ="res1">DATA1: <span id = "data21">??</span></div>
+     <div class ="res1">DATA2: <span id = "data22">??</span></div>        
+     
+     <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <canvas id="canvas"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+     </div>
+   </body>
+ </html>
